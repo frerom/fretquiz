@@ -15,7 +15,11 @@
     (let [{:keys [string-to-guess fret-to-guess]} (:position-to-guess db)
           tuning (get-in db [:fretboard :tuning])
           string-notes (drop-while #(not= % (get tuning string-to-guess)) (cycle (:notes db)))
-          correct-note (nth (rest string-notes) fret-to-guess)
-          correct-answer? (= correct-note answered-note)]
-      (assoc db :answer {:note-answered answered-note
-                         :correct? correct-answer?}))))
+          correct-note (nth string-notes fret-to-guess)
+          correct-answer? (= correct-note answered-note)
+          new-db (assoc db :answer {:note-answered answered-note
+                                    :correct?      correct-answer?})]
+      (if correct-answer?
+        (assoc new-db :position-to-guess {:string-to-guess (inc (rand-int (get-in new-db [:fretboard :nr-of-strings])))
+                                          :fret-to-guess   (inc (rand-int (get-in new-db [:fretboard :nr-of-frets])))})
+        new-db))))
