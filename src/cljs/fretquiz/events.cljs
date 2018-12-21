@@ -17,6 +17,5 @@
           string-notes (drop-while #(not= % (get tuning string-to-guess)) (cycle (:notes db)))
           correct-note (nth (rest string-notes) fret-to-guess)
           correct-answer? (= correct-note answered-note)]
-      (js/console.log string-notes)
       (assoc db :answer {:note-answered answered-note
                          :correct? correct-answer?}))))
