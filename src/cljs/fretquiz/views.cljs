@@ -31,17 +31,29 @@
   (+ x-padding (* (* 2 (/ (- fret-length (* 2 x-padding)) 100)) (get fret->distance-from-nut fret-nr))))
 
 (defn string-y-position [y-padding fret-width nr-of-strings string-nr]
-  (+ y-padding (* string-nr (/ (- fret-width (* 2 y-padding)) nr-of-strings))))
+  (+ y-padding (* string-nr (/ (- fret-width (* 2 y-padding)) (dec nr-of-strings)))))
+
+(defn fret-hint [x-padding y-padding fret-length fret-nr]
+  [:g
+   [:circle {:cx           (+ (/ (- (fret-x-position x-padding fret-length fret-nr)
+                                    (fret-x-position x-padding fret-length (dec fret-nr)))
+                                 2)
+                              (fret-x-position x-padding fret-length (dec fret-nr)))
+             :cy           (- y-padding 5)
+             :r            "2"
+             :fill         "red"
+             :stroke-width "2"
+             :stroke       "red"}]])
 
 (defn svg-fretboard []
   (let [{:keys [nr-of-strings nr-of-frets]} @(re-frame/subscribe [::subs/fretboard])
         {:keys [string-to-guess fret-to-guess]} @(re-frame/subscribe [::subs/position-to-guess])
         fret-length 800
-        fret-width 80
+        fret-width 90
         x-padding 10
-        y-padding 3]
+        y-padding 10]
     [:svg {:width fret-length :height fret-width :view-box (str "0 0 " fret-length " " fret-width) :style {:padding "10px"}}
-     [:g
+     [:g.frets
       (for [fret-nr (range (inc nr-of-frets))]
         (let [x-position (fret-x-position x-padding fret-length fret-nr)]
           ^{:key fret-nr} [:path {:d            (str "M" x-position ",0 L" x-position "," fret-width)
@@ -49,17 +61,19 @@
                                   :stroke-width (if (zero? fret-nr) "4" "2")
                                   :fill         "none"}]
           ))]
-     [:g
-      (for [string-nr (range (inc nr-of-strings))]
+     [:g.strings
+      (for [string-nr (range nr-of-strings)]
         (let [y-position (string-y-position y-padding fret-width nr-of-strings string-nr)]
           ^{:key string-nr} [:path {:d (str "M0," y-position " L" fret-length "," y-position) :stroke "red" :stroke-width "2" :fill "none"}]
           ))]
-     [:g
-      (let [x-position (+ (/ (- (fret-x-position x-padding fret-length fret-to-guess)
-                                (fret-x-position x-padding fret-length (dec fret-to-guess)))
-                             2)
-                          (fret-x-position x-padding fret-length (dec fret-to-guess)))
-            y-position (string-y-position y-padding fret-width nr-of-strings string-to-guess)]
+     [:g.fret-nr-hints
+      [fret-hint x-padding y-padding fret-length 5]
+      [fret-hint x-padding y-padding fret-length 7]
+      [fret-hint x-padding y-padding fret-length 10]
+      [fret-hint x-padding y-padding fret-length 12]]
+     [:g.guess-pointer
+      (let [x-position (- (fret-x-position x-padding fret-length fret-to-guess) 10)
+            y-position (string-y-position y-padding fret-width nr-of-strings (dec string-to-guess))]
         [:circle {:cx           x-position
                   :cy           y-position
                   :r            "5"
