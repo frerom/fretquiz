@@ -28,10 +28,19 @@
                               68.502])
 
 (defn fret-x-position [x-padding fret-length fret-nr]
-  (+ x-padding (* (* 2 (/ (- fret-length (* 2 x-padding)) 100)) (get fret->distance-from-nut fret-nr))))
+  (+ x-padding
+     (*
+       (* 2
+          (/ (- fret-length
+                (* 2 x-padding))
+             100))
+       (get fret->distance-from-nut fret-nr))))
 
 (defn string-y-position [y-padding fret-width nr-of-strings string-nr]
-  (+ y-padding (* string-nr (/ (- fret-width (* 2 y-padding)) (dec nr-of-strings)))))
+  (+ y-padding
+     (* string-nr
+        (/ (- fret-width (* 2 y-padding))
+           (dec nr-of-strings)))))
 
 (defn fret-hint [x-padding y-padding fret-length fret-nr]
   [:g
@@ -59,13 +68,11 @@
           ^{:key fret-nr} [:path {:d            (str "M" x-position ",0 L" x-position "," fret-width)
                                   :stroke       "red"
                                   :stroke-width (if (zero? fret-nr) "4" "2")
-                                  :fill         "none"}]
-          ))]
+                                  :fill         "none"}]))]
      [:g.strings
       (for [string-nr (range nr-of-strings)]
         (let [y-position (string-y-position y-padding fret-width nr-of-strings string-nr)]
-          ^{:key string-nr} [:path {:d (str "M0," y-position " L" fret-length "," y-position) :stroke "red" :stroke-width "2" :fill "none"}]
-          ))]
+          ^{:key string-nr} [:path {:d (str "M0," y-position " L" fret-length "," y-position) :stroke "red" :stroke-width "2" :fill "none"}]))]
      [:g.fret-nr-hints
       [fret-hint x-padding y-padding fret-length 5]
       [fret-hint x-padding y-padding fret-length 7]
@@ -83,9 +90,17 @@
 
 (defn alternative-buttons []
   (let [notes @(re-frame/subscribe [::subs/notes])]
-    [:div
+    [:div {:style {:display               "grid"
+                   :grid-template-columns "100px 100px 100px 100px 100px 100px"
+                   :grid-auto-rows        "100px"
+                   :grid-column-gap       "10px"
+                   :grid-row-gap          "10px"}}
      (map (fn [note]
-            ^{:key note} [:button {:on-click #(re-frame/dispatch [::events/answer note])} note])
+            ^{:key note} [:button {:on-click #(re-frame/dispatch [::events/answer note])
+                                   :style {:background "none"
+                                           :border     "5px solid red"
+                                           :font-size  "24px"}}
+                          note])
           notes)]))
 
 (defn result []
@@ -100,6 +115,5 @@
    [:h1 "Fretquiz"]
    [svg-fretboard]
    [alternative-buttons]
-   [result]
-   ])
+   [result]])
 
