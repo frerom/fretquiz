@@ -3,10 +3,9 @@
     [re-frame.core :as re-frame]
     [fretquiz.subs :as subs]
     [fretquiz.events :as events]
-    ))
+    [fretquiz.svg :refer [path M L Q Z H]]))
 
-(def fret->distance-from-nut [0
-                              5.613
+(def fret->distance-from-nut [5.613
                               10.910
                               15.910
                               20.630
@@ -28,8 +27,8 @@
                               68.502])
 
 (defn fret-x-position [fret-nr]
-  (+ 10 (* 10
-      (get fret->distance-from-nut fret-nr))))
+  (* 10
+     (get fret->distance-from-nut (dec fret-nr))))
 
 (defn string-y-position [y-padding fretboard-width nr-of-strings string-nr]
   (+ y-padding
@@ -45,7 +44,7 @@
                                     (+ x (/ width 2)) "," y " "
                                     x "," (+ y (/ height 2)))))])
 
-(defn fret-hint [{:keys [x-padding y-padding fretboard-length]} fret-nr]
+(defn fret-hint [{:keys [y-padding]} fret-nr]
   [:g
    [diamond {:x            (+ (/ (- (fret-x-position fret-nr)
                                     (fret-x-position (dec fret-nr)))
@@ -67,18 +66,21 @@
 
 (defn frets [{:keys [nr-of-frets fretboard-width]}]
   [:g.frets
-   (for [fret-nr (range (inc nr-of-frets))]
+   (for [fret-nr (range nr-of-frets)]
      (let [x-position (fret-x-position fret-nr)]
-       ^{:key fret-nr} [:path {:d            (str "M" x-position ",0 L" x-position "," fretboard-width)
-                               :stroke       "red"
-                               :stroke-width (if (zero? fret-nr) "4" "2")
-                               :fill         "none"}]))])
+       ^{:key fret-nr} [path {:stroke       "red"
+                              :stroke-width (if (zero? fret-nr) 0 2)
+                              :fill         "none"}
+                        (M x-position 0)
+                        (L x-position fretboard-width)]))])
 
 (defn strings [{:keys [y-padding nr-of-strings fretboard-width fretboard-length]}]
   [:g.strings
    (for [string-nr (range nr-of-strings)]
      (let [y-position (string-y-position y-padding fretboard-width nr-of-strings string-nr)]
-       ^{:key string-nr} [:path {:d (str "M0," y-position " L" fretboard-length "," y-position) :stroke "red" :stroke-width "2" :fill "none"}]))])
+       ^{:key string-nr} [path {:stroke "red" :stroke-width "1" :fill "none"}
+                          (M 0 y-position)
+                          (L fretboard-length y-position)]))])
 
 (defn pointer [{:keys [y-padding fretboard-width nr-of-strings string-to-guess fret-to-guess]}]
   [:g.guess-pointer
@@ -92,28 +94,107 @@
                :stroke-width "2"
                :stroke       "black"}])])
 
-(defn fretboard []
+(defn fretboard [{:keys [length width x y string-y-offset]}]
   (let [{:keys [nr-of-strings nr-of-frets]} @(re-frame/subscribe [::subs/fretboard])
         {:keys [string-to-guess fret-to-guess]} @(re-frame/subscribe [::subs/position-to-guess])
-        fretboard-length 700
-        fretboard-width  90
-        ctx              {:fretboard-length fretboard-length
-                          :fretboard-width  fretboard-width
-                          :x-padding        10
-                          :y-padding        10
-                          :nr-of-strings    nr-of-strings
-                          :nr-of-frets      nr-of-frets
-                          :string-to-guess  string-to-guess
-                          :fret-to-guess    fret-to-guess}]
-    [:svg {:width    fretboard-length
-           :height   fretboard-width
-           :x        200
-           :y        110
-           :view-box (str "0 0 " fretboard-length " " fretboard-width)}
+        ctx {:fretboard-length length
+             :fretboard-width  width
+             :y-padding        string-y-offset
+             :nr-of-strings    nr-of-strings
+             :nr-of-frets      nr-of-frets
+             :string-to-guess  string-to-guess
+             :fret-to-guess    fret-to-guess}]
+    [:svg {:width    length
+           :height   width
+           :x        x
+           :y        y
+           :view-box (str "0 0 " length " " width)}
+     [:rect {:x      0
+             :y      0
+             :width  length
+             :height width
+             :fill   "grey"}]
      [frets ctx]
      [strings ctx]
      [fret-nr-hints ctx]
      [pointer ctx]]))
+
+(defn head-strings [{:keys [length fretboard-width fretboard-y string-y-offset]} nr-of-strings]
+  [:g
+   (for [string-nr (range nr-of-strings)]
+     (let [y-start-position (+ fretboard-y
+                               (string-y-position string-y-offset fretboard-width nr-of-strings string-nr))
+           y-end-position   (+ y-start-position (+ 10 (* string-nr 3)))
+           x-position       (+ 40
+                               (* (- (dec nr-of-strings) string-nr)
+                                  (/ (- length 70)
+                                     nr-of-strings)))]
+       ^{:key string-nr} [:g
+                          [path {:stroke-width 1
+                                 :stroke       "red"}
+                           (M length y-start-position)
+                           (L x-position y-end-position)]
+                          [:circle {:cx           x-position
+                                    :cy           (- y-end-position 10)
+                                    :r            10
+                                    :stroke       "red"
+                                    :stroke-width 1
+                                    :fill         "none"}]]))])
+
+(defn bridge [{:keys [length fretboard-y fretboard-width bridge-width]}]
+  [:line {:stroke       "red"
+          :stroke-width bridge-width
+          :x1           (- length (/ bridge-width 2))
+          :y1           fretboard-y
+          :x2           (- length (/ bridge-width 2))
+          :y2           (+ fretboard-y fretboard-width)}])
+
+(defn head-shape [{:keys [length width bridge-width]}]
+  (let [length (- length bridge-width)]
+    [path {:stroke "none"
+           :fill   "grey"}
+     (M 5 0)
+     (Q 0 (/ width 2) 5 width)
+     (L (- length 30) (- width 10))
+     (Q (- length 15) (- width 25) length (- width 30))
+     (L length 30)
+     (Q (- length 15) 25 (- length 30) 10)
+     (Z)]))
+
+(defn head [{:keys [width length] :as ctx}]
+  (let [{:keys [nr-of-strings]} @(re-frame/subscribe [::subs/fretboard])
+        ctx (assoc ctx :bridge-width 8)]
+    [:svg {:width    length
+           :height   width
+           :x        0
+           :y        0
+           :view-box (str "0 0 " length " " width)}
+     [head-shape ctx]
+     [bridge ctx]
+     [head-strings ctx nr-of-strings]]))
+
+(defn balalaika []
+  (let [fretboard-width  90
+        fretboard-length 700
+        head-width       150
+        head-length      300
+        fretboard-y      (/ (- head-width fretboard-width) 2)
+        string-y-offset  10
+        balalaika-length (+ head-length fretboard-length)
+        balalaika-width  (max head-width fretboard-width)]
+    [:svg {:width    balalaika-length
+           :height   balalaika-width
+           :view-box (str "0 0 " balalaika-length " " balalaika-width)}
+     [head {:width           head-width
+            :length          head-length
+            :fretboard-width fretboard-width
+            :fretboard-y     fretboard-y
+            :string-y-offset string-y-offset}]
+     [fretboard {:width           fretboard-width
+                 :length          fretboard-length
+                 :x               head-length
+                 :y               fretboard-y
+                 :string-y-offset string-y-offset}]]))
 
 (defn alternative-buttons []
   (let [notes @(re-frame/subscribe [::subs/notes])]
@@ -140,7 +221,6 @@
 (defn main-panel []
   [:div
    [:h1 "Fretquiz"]
-   [fretboard]
+   [balalaika]
    [alternative-buttons]
    [result]])
-

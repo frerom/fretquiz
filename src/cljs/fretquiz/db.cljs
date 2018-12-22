@@ -2,7 +2,7 @@
 
 (def default-db
   {:notes             ["A" "A#/Bb" "B" "C" "C#/Db" "D" "D#/Eb" "E" "F" "F#/Gb" "G" "G#/Ab"]
-   :fretboard         {:nr-of-strings 6 
+   :fretboard         {:nr-of-strings 6
                        :nr-of-frets   16
                        :tuning        {1 "E"
                                        2 "B"
