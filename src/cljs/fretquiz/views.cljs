@@ -53,16 +53,23 @@
                                     (+ x (/ width 2)) "," y " "
                                     x "," (+ y (/ height 2)))))])
 
-(defn fret-hint [{:keys [y-padding fret-hint-color]} fret-nr]
-  [:g
-   [diamond {:x      (+ (/ (- (fret-x-position fret-nr)
-                              (fret-x-position (dec fret-nr)))
-                           2)
-                        (fret-x-position (dec fret-nr)))
-             :y      (- y-padding 5)
-             :width  3
-             :height 2
-             :fill   fret-hint-color}]])
+(defn fret-hint [{:keys [fret-hint-color fretboard-width]} fret-nr]
+  (let [x (+ (/ (- (fret-x-position fret-nr)
+                   (fret-x-position (dec fret-nr)))
+                2)
+             (fret-x-position (dec fret-nr)))
+        y 4]
+    [:g
+     [diamond {:x      x
+               :y      y
+               :width  7
+               :height 5
+               :fill   fret-hint-color}]
+     [diamond {:x      x
+               :y      (- fretboard-width 4)
+               :width  7
+               :height 5
+               :fill   fret-hint-color}]]))
 
 (defn fret-nr-hints [ctx]
   [:g.fret-nr-hints
@@ -91,13 +98,13 @@
 
 (defn pointer [{:keys [y-padding fretboard-width nr-of-strings string-to-guess fret-to-guess pointer-color]}]
   [:g.guess-pointer
-   (let [x-position (- (fret-x-position fret-to-guess) 10)
-         y-position (string-y-position y-padding fretboard-width nr-of-strings (dec string-to-guess))]
-     [diamond {:x      x-position
-               :y      y-position
-               :width  12
-               :height 10
-               :fill   pointer-color}])])
+   (let [attrs {:x            (- (fret-x-position fret-to-guess) 10)
+                :y            (string-y-position y-padding fretboard-width nr-of-strings (dec string-to-guess))
+                :stroke       pointer-color
+                :fill         "none"}]
+     [:g
+      [diamond (assoc attrs :width 12 :height 10 :stroke-width 2)]
+      [diamond (assoc attrs :width 6 :height 4 :stroke-width 1)]])])
 
 (defn fretboard [{:keys [length width x y string-y-offset fretboard-color] :as ctx}]
   (let [{:keys [nr-of-strings nr-of-frets]} @(re-frame/subscribe [::subs/fretboard])
