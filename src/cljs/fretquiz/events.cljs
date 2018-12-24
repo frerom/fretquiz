@@ -21,5 +21,5 @@
                                     :correct?      correct-answer?})]
       (if correct-answer?
         (assoc new-db :position-to-guess {:string-to-guess (inc (rand-int (get-in new-db [:fretboard :nr-of-strings])))
-                                          :fret-to-guess   (inc (rand-int (get-in new-db [:fretboard :nr-of-frets])))})
+                                          :fret-to-guess   (inc (rand-int (get-in new-db [:fretboard :nr-of-frets-to-guess-on])))})
         new-db))))

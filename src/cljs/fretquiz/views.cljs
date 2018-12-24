@@ -35,10 +35,10 @@
             :indian-khaki "#c3b092"
             :white        "#efefe7"})
 
-(defn fret-x-position [{:keys [fretboard-length fret-stroke-width]} fret-nr]
-  (- (* 2
-      (/ fretboard-length 100)
-      (get fret->distance-from-nut fret-nr))
+(defn fret-x-position [{:keys [fretboard-length fret-stroke-width nr-of-frets]} fret-nr]
+  (- (* (/ 100 (get fret->distance-from-nut (dec nr-of-frets)))
+        (/ fretboard-length 100)
+        (get fret->distance-from-nut fret-nr))
      fret-stroke-width))
 
 (defn string-y-position [y-padding fretboard-width nr-of-strings string-nr]
@@ -109,13 +109,12 @@
       [diamond (assoc attrs :width 6 :height 4 :stroke-width 1)]])])
 
 (defn fretboard [{:keys [length width x y string-y-offset fretboard-color] :as ctx}]
-  (let [{:keys [nr-of-strings nr-of-frets]} @(re-frame/subscribe [::subs/fretboard])
+  (let [{:keys [nr-of-strings]} @(re-frame/subscribe [::subs/fretboard])
         {:keys [string-to-guess fret-to-guess]} @(re-frame/subscribe [::subs/position-to-guess])
         ctx (assoc ctx :fretboard-length length
                        :fretboard-width width
                        :y-padding string-y-offset
                        :nr-of-strings nr-of-strings
-                       :nr-of-frets nr-of-frets
                        :string-to-guess string-to-guess
                        :fret-to-guess fret-to-guess)]
     [:svg {:width    length
@@ -196,6 +195,7 @@
 (defn balalaika []
   (let [fretboard-width   110
         fretboard-length  700
+        nr-of-frets       16
         head-width        (+ fretboard-width 60)
         head-length       300
         fretboard-y       (/ (- head-width fretboard-width) 2)
@@ -205,6 +205,7 @@
         balalaika-width   (max head-width fretboard-width)
         ctx               {:fretboard-width   fretboard-width
                            :fretboard-y       fretboard-y
+                           :nr-of-frets       nr-of-frets
                            :fret-stroke-width fret-stroke-width
                            :string-y-offset   string-y-offset
                            :fret-color        (color :soya-bean)
