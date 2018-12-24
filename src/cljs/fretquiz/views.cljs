@@ -35,9 +35,11 @@
             :indian-khaki "#c3b092"
             :white        "#efefe7"})
 
-(defn fret-x-position [fret-nr]
-  (* 10
-     (get fret->distance-from-nut (dec fret-nr))))
+(defn fret-x-position [{:keys [fretboard-length fret-stroke-width]} fret-nr]
+  (- (* 2
+      (/ fretboard-length 100)
+      (get fret->distance-from-nut fret-nr))
+     fret-stroke-width))
 
 (defn string-y-position [y-padding fretboard-width nr-of-strings string-nr]
   (+ y-padding
@@ -53,11 +55,11 @@
                                     (+ x (/ width 2)) "," y " "
                                     x "," (+ y (/ height 2)))))])
 
-(defn fret-hint [{:keys [fret-hint-color fretboard-width]} fret-nr]
-  (let [x (+ (/ (- (fret-x-position fret-nr)
-                   (fret-x-position (dec fret-nr)))
+(defn fret-hint [{:keys [fret-hint-color fretboard-width] :as ctx} fret-nr]
+  (let [x (+ (/ (- (fret-x-position ctx (dec fret-nr))
+                   (fret-x-position ctx (- fret-nr 2)))
                 2)
-             (fret-x-position (dec fret-nr)))
+             (fret-x-position ctx (- fret-nr 2)))
         y 4]
     [:g
      [diamond {:x      x
@@ -78,12 +80,12 @@
    [fret-hint ctx 10]
    [fret-hint ctx 12]])
 
-(defn frets [{:keys [nr-of-frets fretboard-width fret-color]}]
+(defn frets [{:keys [nr-of-frets fretboard-width fret-color] :as ctx}]
   [:g.frets
    (for [fret-nr (range nr-of-frets)]
-     (let [x-position (fret-x-position fret-nr)]
+     (let [x-position (fret-x-position ctx fret-nr)]
        ^{:key fret-nr} [path {:stroke       fret-color
-                              :stroke-width (if (zero? fret-nr) 0 2)
+                              :stroke-width 4
                               :fill         "none"}
                         (M x-position 0)
                         (L x-position fretboard-width)]))])
@@ -96,12 +98,12 @@
                           (M 0 y-position)
                           (L fretboard-length y-position)]))])
 
-(defn pointer [{:keys [y-padding fretboard-width nr-of-strings string-to-guess fret-to-guess pointer-color]}]
+(defn pointer [{:keys [y-padding fretboard-width nr-of-strings string-to-guess fret-to-guess pointer-color] :as ctx}]
   [:g.guess-pointer
-   (let [attrs {:x            (- (fret-x-position fret-to-guess) 10)
-                :y            (string-y-position y-padding fretboard-width nr-of-strings (dec string-to-guess))
-                :stroke       pointer-color
-                :fill         "none"}]
+   (let [attrs {:x      (- (fret-x-position ctx (dec fret-to-guess)) 10)
+                :y      (string-y-position y-padding fretboard-width nr-of-strings (dec string-to-guess))
+                :stroke pointer-color
+                :fill   "none"}]
      [:g
       [diamond (assoc attrs :width 12 :height 10 :stroke-width 2)]
       [diamond (assoc attrs :width 6 :height 4 :stroke-width 1)]])])
@@ -192,25 +194,27 @@
      [head-strings ctx nr-of-strings]]))
 
 (defn balalaika []
-  (let [fretboard-width  110
-        fretboard-length 700
-        head-width       (+ fretboard-width 60)
-        head-length      300
-        fretboard-y      (/ (- head-width fretboard-width) 2)
-        string-y-offset  10
-        balalaika-length (+ head-length fretboard-length)
-        balalaika-width  (max head-width fretboard-width)
-        ctx              {:fretboard-width fretboard-width
-                          :fretboard-y     fretboard-y
-                          :string-y-offset string-y-offset
-                          :fret-color      (color :soya-bean)
-                          :fretboard-color (color :indian-khaki)
-                          :head-color      (color :tamarillo)
-                          :string-color    (color :white)
-                          :bridge-color    (color :thunder)
-                          :nut-color       (color :thunder)
-                          :fret-hint-color (color :soya-bean)
-                          :pointer-color   (color :punch)}]
+  (let [fretboard-width   110
+        fretboard-length  700
+        head-width        (+ fretboard-width 60)
+        head-length       300
+        fretboard-y       (/ (- head-width fretboard-width) 2)
+        fret-stroke-width 2
+        string-y-offset   10
+        balalaika-length  (+ head-length fretboard-length)
+        balalaika-width   (max head-width fretboard-width)
+        ctx               {:fretboard-width   fretboard-width
+                           :fretboard-y       fretboard-y
+                           :fret-stroke-width fret-stroke-width
+                           :string-y-offset   string-y-offset
+                           :fret-color        (color :soya-bean)
+                           :fretboard-color   (color :indian-khaki)
+                           :head-color        (color :tamarillo)
+                           :string-color      (color :white)
+                           :bridge-color      (color :thunder)
+                           :nut-color         (color :thunder)
+                           :fret-hint-color   (color :soya-bean)
+                           :pointer-color     (color :punch)}]
     [:svg {:width    balalaika-length
            :height   balalaika-width
            :view-box (str "0 0 " balalaika-length " " balalaika-width)}
