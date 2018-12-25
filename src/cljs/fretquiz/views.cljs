@@ -216,15 +216,19 @@
                            :nut-color         (color :thunder)
                            :fret-hint-color   (color :soya-bean)
                            :pointer-color     (color :punch)}]
-    [:svg {:width    balalaika-length
-           :height   balalaika-width
-           :view-box (str "0 0 " balalaika-length " " balalaika-width)}
-     [head (assoc ctx :width head-width
-                      :length head-length)]
-     [fretboard (assoc ctx :width fretboard-width
-                           :length fretboard-length
-                           :x head-length
-                           :y fretboard-y)]]))
+    [:div {:style {:width  balalaika-width
+                   :height balalaika-length}}
+     [:svg {:width    balalaika-length
+            :height   balalaika-width
+            :view-box (str "0 0 " balalaika-length " " balalaika-width)
+            :style    {:transform-origin "bottom left"
+                       :transform        (str "rotate(90deg) translateX(-" balalaika-width "px)")}}
+      [head (assoc ctx :width head-width
+                       :length head-length)]
+      [fretboard (assoc ctx :width fretboard-width
+                            :length fretboard-length
+                            :x head-length
+                            :y fretboard-y)]]]))
 
 (defn alternative-buttons []
   (let [notes @(re-frame/subscribe [::subs/notes])]
@@ -251,18 +255,18 @@
 (defn main-panel []
   [:div
    [:h1 "FretQuiz"]
-   (for [[color-name color-code] (sort (fn [[_ c1] [_ c2]]
-                                         (< (apply + (map #(js/parseInt % 16)
-                                                          (re-seq #".{1,4}" (.substring c1 1 7))))
-                                            (apply + (map #(js/parseInt % 16)
-                                                          (re-seq #".{1,4}" (.substring c2 1 7))))))
-                                       color)]
-     ^{:key color-name} [:div
-                         [:span {:style {:display          "inline-block"
-                                         :width            "10px"
-                                         :height           "10px"
-                                         :background-color color-code}}]
-                         [:span " " color-name]])
+   #_(for [[color-name color-code] (sort (fn [[_ c1] [_ c2]]
+                                           (< (apply + (map #(js/parseInt % 16)
+                                                            (re-seq #".{1,4}" (.substring c1 1 7))))
+                                              (apply + (map #(js/parseInt % 16)
+                                                            (re-seq #".{1,4}" (.substring c2 1 7))))))
+                                         color)]
+       ^{:key color-name} [:div
+                           [:span {:style {:display          "inline-block"
+                                           :width            "10px"
+                                           :height           "10px"
+                                           :background-color color-code}}]
+                           [:span " " color-name]])
    [balalaika]
    [alternative-buttons]
    [result]])
