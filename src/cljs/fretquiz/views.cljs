@@ -1,5 +1,6 @@
 (ns fretquiz.views
   (:require
+    [clojure.string :refer [replace-first]]
     [re-frame.core :as re-frame]
     [fretquiz.subs :as subs]
     [fretquiz.events :as events]
@@ -192,56 +193,53 @@
      [bridge ctx]
      [head-strings ctx nr-of-strings]]))
 
-(defn balalaika []
-  (let [fretboard-width   110
-        fretboard-length  700
-        nr-of-frets       16
-        head-width        (+ fretboard-width 60)
-        head-length       300
-        fretboard-y       (/ (- head-width fretboard-width) 2)
-        fret-stroke-width 2
-        string-y-offset   10
-        balalaika-length  (+ head-length fretboard-length)
-        balalaika-width   (max head-width fretboard-width)
-        ctx               {:fretboard-width   fretboard-width
-                           :fretboard-y       fretboard-y
-                           :nr-of-frets       nr-of-frets
-                           :fret-stroke-width fret-stroke-width
-                           :string-y-offset   string-y-offset
-                           :fret-color        (color :soya-bean)
-                           :fretboard-color   (color :indian-khaki)
-                           :head-color        (color :tamarillo)
-                           :string-color      (color :white)
-                           :bridge-color      (color :thunder)
-                           :nut-color         (color :thunder)
-                           :fret-hint-color   (color :soya-bean)
-                           :pointer-color     (color :punch)}]
-    [:div {:style {:width  balalaika-width
-                   :height balalaika-length}}
-     [:svg {:width    balalaika-length
-            :height   balalaika-width
-            :view-box (str "0 0 " balalaika-length " " balalaika-width)
-            :style    {:transform-origin "bottom left"
-                       :transform        (str "rotate(90deg) translateX(-" balalaika-width "px)")}}
-      [head (assoc ctx :width head-width
-                       :length head-length)]
-      [fretboard (assoc ctx :width fretboard-width
-                            :length fretboard-length
-                            :x head-length
-                            :y fretboard-y)]]]))
+(defn balalaika [{:keys [balalaika-length balalaika-width fretboard-y head-length head-width fretboard-length fretboard-width] :as ctx}]
+  [:div {:style {:width  balalaika-width
+                 :height balalaika-length}}
+   [:svg {:width    balalaika-length
+          :height   balalaika-width
+          :view-box (str (* head-length 0.75) " 0 " balalaika-length " " balalaika-width)
+          :style    {:transform-origin "bottom left"
+                     :transform        (str "rotate(90deg) translateX(-" balalaika-width "px)")}
+          }
+    [head (assoc ctx :width head-width
+                     :length head-length)]
+    [fretboard (assoc ctx :width fretboard-width
+                          :length fretboard-length
+                          :x head-length
+                          :y fretboard-y)]]])
 
-(defn alternative-buttons []
+(defn note-buttons []
   (let [notes @(re-frame/subscribe [::subs/notes])]
     [:div {:style {:display               "grid"
-                   :grid-template-columns "100px 100px 100px 100px 100px 100px"
-                   :grid-auto-rows        "100px"
+                   :grid-template-areas   "
+                   \"C .\"    
+                   \"C CsDb\"
+                   \"D CsDb\"
+                   \"D DsEb\"
+                   \"E DsEb\"
+                   \"E .\"
+                   \"F .\"
+                   \"F FsGb\"
+                   \"G FsGb\"
+                   \"G GsAb\"
+                   \"A GsAb\"
+                   \"A AsBb\"
+                   \"B AsBb\"
+                   \"B .\"
+                   "
                    :grid-column-gap       "10px"
-                   :grid-row-gap          "10px"}}
+                   :grid-row-gap          "10px"
+                   :grid-template-columns "80px 80px"
+                   :grid-template-rows    "repeat(14 , 40px)"
+                   :grid-auto-flow        "column"}}
      (map (fn [note]
             ^{:key note} [:button {:on-click #(re-frame/dispatch [::events/answer note])
                                    :style    {:background "none"
                                               :border     (str "5px solid " (color :punch))
-                                              :font-size  "24px"}}
+                                              :font-size  "24px"
+                                              :grid-area  (-> (replace-first note #"#" "s")
+                                                              (replace-first #"/" ""))}}
                           note])
           notes)]))
 
@@ -253,20 +251,48 @@
        (str note-answered " is not correct"))]))
 
 (defn main-panel []
-  [:div
-   [:h1 "FretQuiz"]
-   #_(for [[color-name color-code] (sort (fn [[_ c1] [_ c2]]
-                                           (< (apply + (map #(js/parseInt % 16)
-                                                            (re-seq #".{1,4}" (.substring c1 1 7))))
-                                              (apply + (map #(js/parseInt % 16)
-                                                            (re-seq #".{1,4}" (.substring c2 1 7))))))
-                                         color)]
-       ^{:key color-name} [:div
-                           [:span {:style {:display          "inline-block"
-                                           :width            "10px"
-                                           :height           "10px"
-                                           :background-color color-code}}]
-                           [:span " " color-name]])
-   [balalaika]
-   [alternative-buttons]
-   [result]])
+  (let [fretboard-width  110
+        fretboard-length 700
+        head-width       (+ fretboard-width 60)
+        head-length      300
+        balalaika-length (+ head-length fretboard-length)
+        balalaika-width  (max head-width fretboard-width)
+        ctx              {:fretboard-width   fretboard-width
+                          :fretboard-length  fretboard-length
+                          :fretboard-y       (/ (- head-width fretboard-width) 2)
+                          :nr-of-frets       16
+                          :fret-stroke-width 2
+                          :string-y-offset   10
+                          :fret-color        (color :soya-bean)
+                          :fretboard-color   (color :indian-khaki)
+                          :head-color        (color :tamarillo)
+                          :string-color      (color :white)
+                          :bridge-color      (color :thunder)
+                          :nut-color         (color :thunder)
+                          :fret-hint-color   (color :soya-bean)
+                          :pointer-color     (color :punch)
+                          :head-width        head-width
+                          :head-length       head-length
+                          :balalaika-length  balalaika-length
+                          :balalaika-width   balalaika-width}]
+    [:div
+     [:h1 "FretQuiz"]
+     #_(for [[color-name color-code] (sort (fn [[_ c1] [_ c2]]
+                                             (< (apply + (map #(js/parseInt % 16)
+                                                              (re-seq #".{1,4}" (.substring c1 1 7))))
+                                                (apply + (map #(js/parseInt % 16)
+                                                              (re-seq #".{1,4}" (.substring c2 1 7))))))
+                                           color)]
+         ^{:key color-name} [:div
+                             [:span {:style {:display          "inline-block"
+                                             :width            "10px"
+                                             :height           "10px"
+                                             :background-color color-code}}]
+                             [:span " " color-name]])
+     [:div {:style {:display               "grid"
+                    :grid-template-columns (str balalaika-width "px auto")
+                    :grid-template-rows    "auto"
+                    :grid-column-gap  "30px"}}
+      [balalaika ctx]
+      [note-buttons]]
+     [result]]))
