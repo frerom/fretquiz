@@ -21,3 +21,10 @@
   ::answer
   (fn [db]
     (:answer db)))
+
+(re-frame/reg-sub
+  ::fail-class
+  (fn [db]
+    (let [animation-nr (:fail-animation db)]
+      (when animation-nr
+        (str "fail-shake-" (:fail-animation db))))))

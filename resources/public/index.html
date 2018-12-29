@@ -1,17 +1,43 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset='utf-8'>
     <link rel="stylesheet" href="/css/styles.css">
     <style>
-      body {
-        background: #efefe7;
-      }
+        body {
+            background: #efefe7;
+        }
+
+        .fail-shake-1 {
+            animation: fail-shake-1 0.2s linear 1;
+        }
+
+        .fail-shake-2 {
+            animation: fail-shake-2 0.2s linear 1;
+        }
+
+        @keyframes fail-shake-1 {
+            0%, 50%, 100% {
+                transform: skew(1deg, -1deg) translate(-6px, 4px);
+            }
+            25%, 75% {
+                transform: skew(-1deg, 1deg) translate(4px, -6px);
+            }
+        }
+
+        @keyframes fail-shake-2 {
+            0%, 25%, 50%, 75%, 100% {
+                transform: skew(1deg, -1deg) translate(-6px, 4px);
+            }
+            12%, 37%, 63%, 88% {
+                transform: skew(-1deg, 1deg) translate(4px, -6px);
+            }
+        }
     </style>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script src="js/compiled/app.js"></script>
-    <script>fretquiz.core.init();</script>
-  </body>
+</head>
+<body>
+<div id="app"></div>
+<script src="js/compiled/app.js"></script>
+<script>fretquiz.core.init();</script>
+</body>
 </html>

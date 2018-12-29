@@ -213,25 +213,25 @@
   (let [notes @(re-frame/subscribe [::subs/notes])]
     [:div {:style {:display               "grid"
                    :grid-template-areas   "
-                   \"C .\"    
-                   \"C CsDb\"
-                   \"D CsDb\"
-                   \"D DsEb\"
-                   \"E DsEb\"
-                   \"E .\"
-                   \"F .\"
-                   \"F FsGb\"
-                   \"G FsGb\"
-                   \"G GsAb\"
-                   \"A GsAb\"
-                   \"A AsBb\"
-                   \"B AsBb\"
-                   \"B .\"
+                   \". C\"
+                   \"CsDb C\"
+                   \"CsDb D\"
+                   \"DsEb D\"
+                   \"DsEb E\"
+                   \". E\"
+                   \". F\"
+                   \"FsGb F\"
+                   \"FsGb G\"
+                   \"GsAb G\"
+                   \"GsAb A\"
+                   \"AsBb A\"
+                   \"AsBb B\"
+                   \". B\"
                    "
                    :grid-column-gap       "10px"
                    :grid-row-gap          "10px"
-                   :grid-template-columns "80px 80px"
-                   :grid-template-rows    "repeat(14 , 40px)"
+                   :grid-template-columns "90px 90px"
+                   :grid-template-rows    "repeat(14 , 42px)"
                    :grid-auto-flow        "column"}}
      (map (fn [note]
             ^{:key note} [:button {:on-click #(re-frame/dispatch [::events/answer note])
@@ -274,7 +274,8 @@
                           :head-width        head-width
                           :head-length       head-length
                           :balalaika-length  balalaika-length
-                          :balalaika-width   balalaika-width}]
+                          :balalaika-width   balalaika-width}
+        fail-animation   @(re-frame/subscribe [::subs/fail-class])]
     [:div
      [:h1 "FretQuiz"]
      #_(for [[color-name color-code] (sort (fn [[_ c1] [_ c2]]
@@ -292,7 +293,8 @@
      [:div {:style {:display               "grid"
                     :grid-template-columns (str balalaika-width "px auto")
                     :grid-template-rows    "auto"
-                    :grid-column-gap  "30px"}}
+                    :grid-column-gap       "30px"}
+            :class fail-animation}
       [balalaika ctx]
       [note-buttons]]
      [result]]))
