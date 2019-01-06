@@ -95,7 +95,10 @@
   [:g.strings
    (for [string-nr (range nr-of-strings)]
      (let [y-position (string-y-position y-padding fretboard-width nr-of-strings string-nr)]
-       ^{:key string-nr} [path {:stroke string-color :stroke-width "1" :fill "none"}
+       ^{:key string-nr} [path {:stroke string-color
+                                :stroke-width (+ 1 (* string-nr (/ 2 nr-of-strings)))
+                                :stroke-opacity 0.8
+                                :fill "none"}
                           (M 0 y-position)
                           (L fretboard-length y-position)]))])
 
@@ -155,8 +158,9 @@
                                   (/ (- length 70)
                                      nr-of-strings)))]
        ^{:key string-nr} [:g
-                          [path {:stroke-width 1
-                                 :stroke       string-color}
+                          [path {:stroke-width (+ 1 (* string-nr (/ 2 nr-of-strings)))
+                                 :stroke       string-color
+                                 :stroke-opacity 0.8}
                            (M length y-start-position)
                            (L x-position y-end-position)]
                           [nut ctx x-position y-end-position]]))])
