@@ -14,4 +14,5 @@
                        :fret-to-guess   12}
    :answer            {:note-answered nil
                        :correct?      nil}
-   :fail-animation    nil})
+   :fail-animation    nil
+   :main              {:active-stage :start-menu}})

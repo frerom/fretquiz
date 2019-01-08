@@ -1,10 +1,7 @@
-(ns fretquiz.views
-  (:require
-    [clojure.string :refer [replace-first]]
-    [re-frame.core :as re-frame]
-    [fretquiz.subs :as subs]
-    [fretquiz.events :as events]
-    [fretquiz.svg :refer [path M L Q Z H]]))
+(ns fretquiz.fretboard.view
+  (:require [re-frame.core :as re-frame]
+            [fretquiz.svg :refer [path M L Q Z H]]
+            [fretquiz.subs :as subs]))
 
 (def fret->distance-from-nut [5.613
                               10.910
@@ -26,15 +23,6 @@
                               64.645
                               66.629
                               68.502])
-
-(def color {:tamarillo    "#9b2117"
-            :thunder      "#221e21"
-            :black        "#000000"
-            :punch        "#da3732"
-            :pavlova      "#d7c899"
-            :soya-bean    "#5c5445"
-            :indian-khaki "#c3b092"
-            :white        "#efefe7"})
 
 (defn fret-x-position [{:keys [fretboard-length fret-stroke-width nr-of-frets]} fret-nr]
   (- (* (/ 100 (get fret->distance-from-nut (dec nr-of-frets)))
@@ -212,93 +200,3 @@
                           :length fretboard-length
                           :x head-length
                           :y fretboard-y)]]])
-
-(defn note-buttons []
-  (let [notes @(re-frame/subscribe [::subs/notes])]
-    [:div {:style {:display               "grid"
-                   :grid-template-areas   "
-                   \". C\"
-                   \"CsDb C\"
-                   \"CsDb D\"
-                   \"DsEb D\"
-                   \"DsEb E\"
-                   \". E\"
-                   \". F\"
-                   \"FsGb F\"
-                   \"FsGb G\"
-                   \"GsAb G\"
-                   \"GsAb A\"
-                   \"AsBb A\"
-                   \"AsBb B\"
-                   \". B\"
-                   "
-                   :grid-column-gap       "10px"
-                   :grid-row-gap          "10px"
-                   :grid-template-columns "90px 90px"
-                   :grid-template-rows    "repeat(14 , 42px)"
-                   :grid-auto-flow        "column"}}
-     (map (fn [note]
-            ^{:key note} [:button {:on-click #(re-frame/dispatch [::events/answer note])
-                                   :style    {:background "none"
-                                              :border     (str "5px solid " (color :punch))
-                                              :font-size  "24px"
-                                              :grid-area  (-> (replace-first note #"#" "s")
-                                                              (replace-first #"/" ""))}}
-                          note])
-          notes)]))
-
-(defn result []
-  (let [{:keys [note-answered correct?]} @(re-frame/subscribe [::subs/answer])]
-    [:div
-     (if correct?
-       "Nice!"
-       (str note-answered " is not correct"))]))
-
-(defn main-panel []
-  (let [fretboard-width  110
-        fretboard-length 700
-        head-width       (+ fretboard-width 60)
-        head-length      300
-        balalaika-length (+ head-length fretboard-length)
-        balalaika-width  (max head-width fretboard-width)
-        ctx              {:fretboard-width   fretboard-width
-                          :fretboard-length  fretboard-length
-                          :fretboard-y       (/ (- head-width fretboard-width) 2)
-                          :nr-of-frets       16
-                          :fret-stroke-width 2
-                          :string-y-offset   10
-                          :fret-color        (color :soya-bean)
-                          :fretboard-color   (color :indian-khaki)
-                          :head-color        (color :tamarillo)
-                          :string-color      (color :white)
-                          :bridge-color      (color :thunder)
-                          :nut-color         (color :thunder)
-                          :fret-hint-color   (color :soya-bean)
-                          :pointer-color     (color :punch)
-                          :head-width        head-width
-                          :head-length       head-length
-                          :balalaika-length  balalaika-length
-                          :balalaika-width   balalaika-width}
-        fail-animation   @(re-frame/subscribe [::subs/fail-class])]
-    [:div
-     [:h1 "FretQuiz"]
-     #_(for [[color-name color-code] (sort (fn [[_ c1] [_ c2]]
-                                             (< (apply + (map #(js/parseInt % 16)
-                                                              (re-seq #".{1,4}" (.substring c1 1 7))))
-                                                (apply + (map #(js/parseInt % 16)
-                                                              (re-seq #".{1,4}" (.substring c2 1 7))))))
-                                           color)]
-         ^{:key color-name} [:div
-                             [:span {:style {:display          "inline-block"
-                                             :width            "10px"
-                                             :height           "10px"
-                                             :background-color color-code}}]
-                             [:span " " color-name]])
-     [:div {:style {:display               "grid"
-                    :grid-template-columns (str balalaika-width "px auto")
-                    :grid-template-rows    "auto"
-                    :grid-column-gap       "30px"}
-            :class fail-animation}
-      [balalaika ctx]
-      [note-buttons]]
-     [result]]))
